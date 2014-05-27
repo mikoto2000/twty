@@ -1,6 +1,7 @@
 package main
 
 import (
+	"./myoauth"
 	"bufio"
 	"encoding/json"
 	"flag"
@@ -11,7 +12,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -64,90 +64,12 @@ type RSS struct {
 	}
 }
 
-var oauthClient = oauth.Client{
-	TemporaryCredentialRequestURI: "https://api.twitter.com/oauth/request_token",
-	ResourceOwnerAuthorizationURI: "https://api.twitter.com/oauth/authenticate",
-	TokenRequestURI:               "https://api.twitter.com/oauth/access_token",
-}
-
-func clientAuth(requestToken *oauth.Credentials) (*oauth.Credentials, error) {
-	cmd := "xdg-open"
-	url_ := oauthClient.AuthorizationURL(requestToken, nil)
-
-	args := []string{cmd, url_}
-	if runtime.GOOS == "windows" {
-		cmd = "rundll32.exe"
-		args = []string{cmd, "url.dll,FileProtocolHandler", url_}
-	} else if runtime.GOOS == "darwin" {
-		cmd = "open"
-		args = []string{cmd, url_}
-	} else if runtime.GOOS == "plan9" {
-		cmd = "plumb"
-	}
-	cmd, err := exec.LookPath(cmd)
-	if err != nil {
-		log.Fatal("command not found:", err)
-	}
-	p, err := os.StartProcess(cmd, args, &os.ProcAttr{Dir: "", Files: []*os.File{nil, nil, os.Stderr}})
-	if err != nil {
-		log.Fatal("failed to start command:", err)
-	}
-	defer p.Release()
-
-	print("PIN: ")
-	stdin := bufio.NewReader(os.Stdin)
-	b, err := stdin.ReadBytes('\n')
-	if err != nil {
-		log.Fatal("canceled")
-	}
-
-	if b[len(b)-2] == '\r' {
-		b = b[0 : len(b)-2]
-	} else {
-		b = b[0 : len(b)-1]
-	}
-	accessToken, _, err := oauthClient.RequestToken(http.DefaultClient, requestToken, string(b))
-	if err != nil {
-		log.Fatal("failed to request token:", err)
-	}
-	return accessToken, nil
-}
-
-func getAccessToken(config map[string]string) (*oauth.Credentials, bool, error) {
-	oauthClient.Credentials.Token = config["ClientToken"]
-	oauthClient.Credentials.Secret = config["ClientSecret"]
-
-	authorized := false
-	var token *oauth.Credentials
-	accessToken, foundToken := config["AccessToken"]
-	accessSecert, foundSecret := config["AccessSecret"]
-	if foundToken && foundSecret {
-		token = &oauth.Credentials{accessToken, accessSecert}
-	} else {
-		requestToken, err := oauthClient.RequestTemporaryCredentials(http.DefaultClient, "", nil)
-		if err != nil {
-			log.Print("failed to request temporary credentials:", err)
-			return nil, false, err
-		}
-		token, err = clientAuth(requestToken)
-		if err != nil {
-			log.Print("failed to request temporary credentials:", err)
-			return nil, false, err
-		}
-
-		config["AccessToken"] = token.Token
-		config["AccessSecret"] = token.Secret
-		authorized = true
-	}
-	return token, authorized, nil
-}
-
 func getTweets(token *oauth.Credentials, url_ string, opt map[string]string) ([]Tweet, error) {
 	param := make(url.Values)
 	for k, v := range opt {
 		param.Set(k, v)
 	}
-	oauthClient.SignParam(token, "GET", url_, param)
+	myoauth.OauthClient.SignParam(token, "GET", url_, param)
 	url_ = url_ + "?" + param.Encode()
 	res, err := http.Get(url_)
 	if err != nil {
@@ -170,7 +92,7 @@ func getStatuses(token *oauth.Credentials, url_ string, opt map[string]string) (
 	for k, v := range opt {
 		param.Set(k, v)
 	}
-	oauthClient.SignParam(token, "GET", url_, param)
+	myoauth.OauthClient.SignParam(token, "GET", url_, param)
 	url_ = url_ + "?" + param.Encode()
 	res, err := http.Get(url_)
 	if err != nil {
@@ -219,7 +141,7 @@ func postTweet(token *oauth.Credentials, url_ string, opt map[string]string) err
 	for k, v := range opt {
 		param.Set(k, v)
 	}
-	oauthClient.SignParam(token, "POST", url_, param)
+	myoauth.OauthClient.SignParam(token, "POST", url_, param)
 	res, err := http.PostForm(url_, url.Values(param))
 	if err != nil {
 		log.Println("failed to post tweet:", err)
@@ -299,7 +221,7 @@ func main() {
 	flag.Parse()
 
 	file, config := getConfig()
-	token, authorized, err := getAccessToken(config)
+	token, authorized, err := myoauth.GetAccessToken(config)
 	if err != nil {
 		log.Fatal("faild to get access token:", err)
 	}
@@ -346,7 +268,7 @@ func main() {
 	} else if *stream {
 		url_ := "https://userstream.twitter.com/1.1/user.json"
 		param := make(url.Values)
-		oauthClient.SignParam(token, "GET", url_, param)
+		myoauth.OauthClient.SignParam(token, "GET", url_, param)
 		url_ = url_ + "?" + param.Encode()
 		res, err := http.Get(url_)
 		if err != nil {
