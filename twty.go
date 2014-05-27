@@ -264,8 +264,8 @@ func getConfig() (string, map[string]string) {
 
 	b, err := ioutil.ReadFile(file)
 	if err != nil {
-		config["ClientToken"] = "MbartJkKCrSegn45xK9XLw"
-		config["ClientSecret"] = "1nI3dHFtK9UY1kL6UEYWk6r2lFEcNHWhk7MtXe7eo"
+		config["ClientToken"] = "eAw30zFQxWg7tb8NSEmOGyR44"
+		config["ClientSecret"] = "Qpt7o3kMgp0Ca8fDevbUHtrBWTMpdKdFCkWTZf1Zeu9KFdFPBW"
 	} else {
 		err = json.Unmarshal(b, &config)
 		if err != nil {
