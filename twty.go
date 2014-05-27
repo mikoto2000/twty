@@ -2,11 +2,11 @@ package main
 
 import (
 	"./myoauth"
+	"./tweet"
 	"bufio"
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/garyburd/go-oauth/oauth"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -16,144 +16,6 @@ import (
 	"runtime"
 	"strings"
 )
-
-type Tweet struct {
-	Text       string
-	Identifier string `json:"id_str"`
-	Source     string
-	CreatedAt  string `json:"created_at"`
-	User       struct {
-		Name            string
-		ScreenName      string `json:"screen_name"`
-		FollowersCount  int    `json:"followers_count"`
-		ProfileImageURL string `json:"profile_image_url"`
-	}
-	Place *struct {
-		Id       string
-		FullName string `json:"full_name"`
-	}
-	Entities struct {
-		HashTags []struct {
-			Indices [2]int
-			Text    string
-		}
-		UserMentions []struct {
-			Indices    [2]int
-			ScreenName string `json:"screen_name"`
-		} `json:"user_mentions"`
-		Urls []struct {
-			Indices [2]int
-			Url     string
-		}
-	}
-}
-
-type RSS struct {
-	Channel struct {
-		Title       string
-		Description string
-		Link        string
-		Item        []struct {
-			Title       string
-			Description string
-			PubDate     string
-			Link        []string
-			Guid        string
-			Author      string
-		}
-	}
-}
-
-func getTweets(token *oauth.Credentials, url_ string, opt map[string]string) ([]Tweet, error) {
-	param := make(url.Values)
-	for k, v := range opt {
-		param.Set(k, v)
-	}
-	myoauth.OauthClient.SignParam(token, "GET", url_, param)
-	url_ = url_ + "?" + param.Encode()
-	res, err := http.Get(url_)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-	if res.StatusCode != 200 {
-		return nil, err
-	}
-	var tweets []Tweet
-	err = json.NewDecoder(res.Body).Decode(&tweets)
-	if err != nil {
-		return nil, err
-	}
-	return tweets, nil
-}
-
-func getStatuses(token *oauth.Credentials, url_ string, opt map[string]string) ([]Tweet, error) {
-	param := make(url.Values)
-	for k, v := range opt {
-		param.Set(k, v)
-	}
-	myoauth.OauthClient.SignParam(token, "GET", url_, param)
-	url_ = url_ + "?" + param.Encode()
-	res, err := http.Get(url_)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-	if res.StatusCode != 200 {
-		return nil, err
-	}
-	var statuses struct {
-		Statuses []Tweet
-	}
-	err = json.NewDecoder(res.Body).Decode(&statuses)
-	if err != nil {
-		return nil, err
-	}
-	return statuses.Statuses, nil
-}
-
-func showTweets(tweets []Tweet, verbose bool) {
-	if verbose {
-		for i := len(tweets) - 1; i >= 0; i-- {
-			name := tweets[i].User.Name
-			user := tweets[i].User.ScreenName
-			text := tweets[i].Text
-			text = strings.Replace(text, "\r", "", -1)
-			text = strings.Replace(text, "\n", " ", -1)
-			text = strings.Replace(text, "\t", " ", -1)
-			fmt.Println(user + ": " + name)
-			fmt.Println("  " + text)
-			fmt.Println("  " + tweets[i].Identifier)
-			fmt.Println("  " + tweets[i].CreatedAt)
-			fmt.Println()
-		}
-	} else {
-		for i := len(tweets) - 1; i >= 0; i-- {
-			user := tweets[i].User.ScreenName
-			text := tweets[i].Text
-			fmt.Println(user + ": " + text)
-		}
-	}
-}
-
-func postTweet(token *oauth.Credentials, url_ string, opt map[string]string) error {
-	param := make(url.Values)
-	for k, v := range opt {
-		param.Set(k, v)
-	}
-	myoauth.OauthClient.SignParam(token, "POST", url_, param)
-	res, err := http.PostForm(url_, url.Values(param))
-	if err != nil {
-		log.Println("failed to post tweet:", err)
-		return err
-	}
-	defer res.Body.Close()
-	if res.StatusCode != 200 {
-		log.Println("failed to get timeline:", err)
-		return err
-	}
-	return nil
-}
 
 func getConfig() (string, map[string]string) {
 	home := os.Getenv("HOME")
@@ -237,34 +99,34 @@ func main() {
 	}
 
 	if len(*search) > 0 {
-		tweets, err := getStatuses(token, "https://api.twitter.com/1.1/search/tweets.json", map[string]string{"q": *search})
+		tweets, err := tweet.GetStatuses(token, "https://api.twitter.com/1.1/search/tweets.json", map[string]string{"q": *search})
 		if err != nil {
 			log.Fatal("failed to get tweets:", err)
 		}
-		showTweets(tweets, *verbose)
+		tweet.ShowTweets(tweets, *verbose)
 	} else if *reply {
-		tweets, err := getTweets(token, "https://api.twitter.com/1.1/statuses/mentions_timeline.json", map[string]string{})
+		tweets, err := tweet.GetTweets(token, "https://api.twitter.com/1.1/statuses/mentions_timeline.json", map[string]string{})
 		if err != nil {
 			log.Fatal("failed to get tweets:", err)
 		}
-		showTweets(tweets, *verbose)
+		tweet.ShowTweets(tweets, *verbose)
 	} else if len(*list) > 0 {
 		part := strings.SplitN(*list, "/", 2)
 		if len(part) == 2 {
-			tweets, err := getTweets(token, "https://api.twitter.com/1.1/lists/statuses.json", map[string]string{"owner_screen_name": part[0], "slug": part[1]})
+			tweets, err := tweet.GetTweets(token, "https://api.twitter.com/1.1/lists/statuses.json", map[string]string{"owner_screen_name": part[0], "slug": part[1]})
 			if err != nil {
 				log.Fatal("failed to get tweets:", err)
 			}
-			showTweets(tweets, *verbose)
+			tweet.ShowTweets(tweets, *verbose)
 		}
 	} else if len(*user) > 0 {
-		tweets, err := getTweets(token, "https://api.twitter.com/1.1/statuses/user_timeline.json", map[string]string{"screen_name": *user})
+		tweets, err := tweet.GetTweets(token, "https://api.twitter.com/1.1/statuses/user_timeline.json", map[string]string{"screen_name": *user})
 		if err != nil {
 			log.Fatal("failed to get tweets:", err)
 		}
-		showTweets(tweets, *verbose)
+		tweet.ShowTweets(tweets, *verbose)
 	} else if len(*favorite) > 0 {
-		postTweet(token, "https://api.twitter.com/1.1/favorites/create.json", map[string]string{"id": *favorite})
+		tweet.PostTweet(token, "https://api.twitter.com/1.1/favorites/create.json", map[string]string{"id": *favorite})
 	} else if *stream {
 		url_ := "https://userstream.twitter.com/1.1/user.json"
 		param := make(url.Values)
@@ -283,25 +145,25 @@ func main() {
 		for {
 			b, _, err := buf.ReadLine()
 			last = append(last, b...)
-			var tweets [1]Tweet
+			var tweets [1]tweet.Tweet
 			err = json.Unmarshal(last, &tweets[0])
 			if err != nil {
 				continue
 			}
 			last = []byte{}
-			showTweets(tweets[:], *verbose)
+			tweet.ShowTweets(tweets[:], *verbose)
 		}
 	} else if flag.NArg() == 0 {
 		if len(*inreply) > 0 {
-			postTweet(token, "https://api.twitter.com/1.1/statuses/retweet/"+*inreply+".json", map[string]string{})
+			tweet.PostTweet(token, "https://api.twitter.com/1.1/statuses/retweet/"+*inreply+".json", map[string]string{})
 		} else {
-			tweets, err := getTweets(token, "https://api.twitter.com/1.1/statuses/home_timeline.json", map[string]string{})
+			tweets, err := tweet.GetTweets(token, "https://api.twitter.com/1.1/statuses/home_timeline.json", map[string]string{})
 			if err != nil {
 				log.Fatal("failed to get tweets:", err)
 			}
-			showTweets(tweets, *verbose)
+			tweet.ShowTweets(tweets, *verbose)
 		}
 	} else {
-		postTweet(token, "https://api.twitter.com/1.1/statuses/update.json", map[string]string{"status": strings.Join(flag.Args(), " "), "in_reply_to_status_id": *inreply})
+		tweet.PostTweet(token, "https://api.twitter.com/1.1/statuses/update.json", map[string]string{"status": strings.Join(flag.Args(), " "), "in_reply_to_status_id": *inreply})
 	}
 }
