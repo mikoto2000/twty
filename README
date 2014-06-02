@@ -1,3 +1,7 @@
+mattn/twty を golang プログラムに埋め込み可能とするために fork しました。
+
+mikoto2000/twty の目的は、 golang プログラムから twty の機能を呼び出せるように修正することです。
+
 twty: command-line twitter client
 
 Install:
