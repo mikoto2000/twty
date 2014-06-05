@@ -6,8 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/exec"
-	"runtime"
+    "fmt"
 )
 
 var OauthClient = oauth.Client{
@@ -17,28 +16,9 @@ var OauthClient = oauth.Client{
 }
 
 func clientAuth(requestToken *oauth.Credentials) (*oauth.Credentials, error) {
-	cmd := "xdg-open"
 	url_ := OauthClient.AuthorizationURL(requestToken, nil)
 
-	args := []string{cmd, url_}
-	if runtime.GOOS == "windows" {
-		cmd = "rundll32.exe"
-		args = []string{cmd, "url.dll,FileProtocolHandler", url_}
-	} else if runtime.GOOS == "darwin" {
-		cmd = "open"
-		args = []string{cmd, url_}
-	} else if runtime.GOOS == "plan9" {
-		cmd = "plumb"
-	}
-	cmd, err := exec.LookPath(cmd)
-	if err != nil {
-		log.Fatal("command not found:", err)
-	}
-	p, err := os.StartProcess(cmd, args, &os.ProcAttr{Dir: "", Files: []*os.File{nil, nil, os.Stderr}})
-	if err != nil {
-		log.Fatal("failed to start command:", err)
-	}
-	defer p.Release()
+	fmt.Println("url ", url_)
 
 	print("PIN: ")
 	stdin := bufio.NewReader(os.Stdin)
