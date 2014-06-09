@@ -4,11 +4,9 @@ import (
 	"../myoauth"
 	"github.com/garyburd/go-oauth/oauth"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"net/url"
-	"strings"
 )
 
 type Tweet struct {
@@ -104,30 +102,6 @@ func GetStatuses(token *oauth.Credentials, url_ string, opt map[string]string) (
 		return nil, err
 	}
 	return statuses.Statuses, nil
-}
-
-func ShowTweets(tweets []Tweet, verbose bool) {
-	if verbose {
-		for i := len(tweets) - 1; i >= 0; i-- {
-			name := tweets[i].User.Name
-			user := tweets[i].User.ScreenName
-			text := tweets[i].Text
-			text = strings.Replace(text, "\r", "", -1)
-			text = strings.Replace(text, "\n", " ", -1)
-			text = strings.Replace(text, "\t", " ", -1)
-			fmt.Println(user + ": " + name)
-			fmt.Println("  " + text)
-			fmt.Println("  " + tweets[i].Identifier)
-			fmt.Println("  " + tweets[i].CreatedAt)
-			fmt.Println()
-		}
-	} else {
-		for i := len(tweets) - 1; i >= 0; i-- {
-			user := tweets[i].User.ScreenName
-			text := tweets[i].Text
-			fmt.Println(user + ": " + text)
-		}
-	}
 }
 
 func PostTweet(token *oauth.Credentials, url_ string, opt map[string]string) error {

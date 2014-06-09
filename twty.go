@@ -113,13 +113,13 @@ func main() {
 		if err != nil {
 			log.Fatal("failed to get tweets:", err)
 		}
-		tweet.ShowTweets(tweets, *verbose)
+		showTweets(tweets, *verbose)
 	} else if *reply {
 		tweets, err := tweet.GetTweets(token, "https://api.twitter.com/1.1/statuses/mentions_timeline.json", map[string]string{})
 		if err != nil {
 			log.Fatal("failed to get tweets:", err)
 		}
-		tweet.ShowTweets(tweets, *verbose)
+		showTweets(tweets, *verbose)
 	} else if len(*list) > 0 {
 		part := strings.SplitN(*list, "/", 2)
 		if len(part) == 2 {
@@ -127,14 +127,14 @@ func main() {
 			if err != nil {
 				log.Fatal("failed to get tweets:", err)
 			}
-			tweet.ShowTweets(tweets, *verbose)
+			showTweets(tweets, *verbose)
 		}
 	} else if len(*user) > 0 {
 		tweets, err := tweet.GetTweets(token, "https://api.twitter.com/1.1/statuses/user_timeline.json", map[string]string{"screen_name": *user})
 		if err != nil {
 			log.Fatal("failed to get tweets:", err)
 		}
-		tweet.ShowTweets(tweets, *verbose)
+		showTweets(tweets, *verbose)
 	} else if len(*favorite) > 0 {
 		tweet.PostTweet(token, "https://api.twitter.com/1.1/favorites/create.json", map[string]string{"id": *favorite})
 	} else if flag.NArg() == 0 {
@@ -145,9 +145,34 @@ func main() {
 			if err != nil {
 				log.Fatal("failed to get tweets:", err)
 			}
-			tweet.ShowTweets(tweets, *verbose)
+			showTweets(tweets, *verbose)
 		}
 	} else {
 		tweet.PostTweet(token, "https://api.twitter.com/1.1/statuses/update.json", map[string]string{"status": strings.Join(flag.Args(), " "), "in_reply_to_status_id": *inreply})
 	}
 }
+
+func showTweets(tweets []tweet.Tweet, verbose bool) {
+	if verbose {
+		for i := len(tweets) - 1; i >= 0; i-- {
+			name := tweets[i].User.Name
+			user := tweets[i].User.ScreenName
+			text := tweets[i].Text
+			text = strings.Replace(text, "\r", "", -1)
+			text = strings.Replace(text, "\n", " ", -1)
+			text = strings.Replace(text, "\t", " ", -1)
+			fmt.Println(user + ": " + name)
+			fmt.Println("  " + text)
+			fmt.Println("  " + tweets[i].Identifier)
+			fmt.Println("  " + tweets[i].CreatedAt)
+			fmt.Println()
+		}
+	} else {
+		for i := len(tweets) - 1; i >= 0; i-- {
+			user := tweets[i].User.ScreenName
+			text := tweets[i].Text
+			fmt.Println(user + ": " + text)
+		}
+	}
+}
+
