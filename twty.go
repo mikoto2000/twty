@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/garyburd/go-oauth/oauth"
 	"io/ioutil"
 	"log"
 	"os"
@@ -78,19 +79,33 @@ func main() {
 	flag.Parse()
 
 	file, config := getConfig()
-	token, authorized, err := myoauth.GetAccessToken(config)
-	if err != nil {
-		log.Fatal("faild to get access token:", err)
-	}
-	if authorized {
-		b, err := json.MarshalIndent(config, "", "  ")
+	clientToken := config["ClientToken"]
+	clientSecret := config["ClientSecret"]
+	accessToken, foundAccessToken := config["AccessToken"]
+	accessSecret, foundAccessSecret := config["AccessSecret"]
+	var token *oauth.Credentials
+	if foundAccessToken && foundAccessSecret {
+		token = myoauth.NewAccessToken(clientToken, clientSecret, accessToken, accessSecret)
+	} else {
+		clientToken := config["ClientToken"]
+		clientSecret := config["ClientSecret"]
+		tokenTemp, authorized, err := myoauth.GetAccessToken(clientToken, clientSecret)
 		if err != nil {
-			log.Fatal("failed to store file:", err)
+			log.Fatal("faild to get access token:", err)
 		}
-		err = ioutil.WriteFile(file, b, 0700)
-		if err != nil {
-			log.Fatal("failed to store file:", err)
+		if authorized {
+			config["AccessToken"] = tokenTemp.Token
+			config["AccessSecret"] = tokenTemp.Secret
+			b, err := json.MarshalIndent(config, "", "  ")
+			if err != nil {
+				log.Fatal("failed to store file:", err)
+			}
+			err = ioutil.WriteFile(file, b, 0700)
+			if err != nil {
+				log.Fatal("failed to store file:", err)
+			}
 		}
+		token = tokenTemp
 	}
 
 	if len(*search) > 0 {

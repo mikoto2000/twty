@@ -39,32 +39,32 @@ func clientAuth(requestToken *oauth.Credentials) (*oauth.Credentials, error) {
 	return accessToken, nil
 }
 
-func GetAccessToken(config map[string]string) (*oauth.Credentials, bool, error) {
-	OauthClient.Credentials.Token = config["ClientToken"]
-	OauthClient.Credentials.Secret = config["ClientSecret"]
+func NewAccessToken(clientToken string, clientSecret string, accessToken string, accessSecret string)  (*oauth.Credentials) {
+	OauthClient.Credentials.Token = clientToken
+	OauthClient.Credentials.Secret = clientSecret
+
+	return &oauth.Credentials{accessToken, accessSecret}
+}
+
+func GetAccessToken(clientToken string, clientSecret string) (*oauth.Credentials, bool, error) {
+	OauthClient.Credentials.Token = clientToken
+	OauthClient.Credentials.Secret = clientSecret
 
 	authorized := false
 	var token *oauth.Credentials
-	accessToken, foundToken := config["AccessToken"]
-	accessSecert, foundSecret := config["AccessSecret"]
-	if foundToken && foundSecret {
-		token = &oauth.Credentials{accessToken, accessSecert}
-	} else {
-		requestToken, err := OauthClient.RequestTemporaryCredentials(http.DefaultClient, "", nil)
-		if err != nil {
-			log.Print("failed to request temporary credentials:", err)
-			return nil, false, err
-		}
-		token, err = clientAuth(requestToken)
-		if err != nil {
-			log.Print("failed to request temporary credentials:", err)
-			return nil, false, err
-		}
-
-		config["AccessToken"] = token.Token
-		config["AccessSecret"] = token.Secret
-		authorized = true
+	requestToken, err := OauthClient.RequestTemporaryCredentials(http.DefaultClient, "", nil)
+	if err != nil {
+		log.Print("failed to request temporary credentials:", err)
+		return nil, false, err
 	}
+	token, err = clientAuth(requestToken)
+	if err != nil {
+		log.Print("failed to request temporary credentials:", err)
+		return nil, false, err
+	}
+
+	authorized = true
+
 	return token, authorized, nil
 }
 
