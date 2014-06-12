@@ -1,12 +1,10 @@
 package main
 
 import (
-	"./myoauth"
 	"./tweet"
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/garyburd/go-oauth/oauth"
 	"io/ioutil"
 	"log"
 	"os"
@@ -58,12 +56,12 @@ func getConfig() (string, map[string]string) {
 }
 
 func main() {
-	reply := flag.Bool("r", false, "show replies")
-	list := flag.String("l", "", "show tweets")
-	user := flag.String("u", "", "show user timeline")
-	favorite := flag.String("f", "", "specify favorite ID")
-	search := flag.String("s", "", "search word")
-	inreply := flag.String("i", "", "specify in-reply ID, if not specify text, it will be RT.")
+//	reply := flag.Bool("r", false, "show replies")
+//	list := flag.String("l", "", "show tweets")
+//	user := flag.String("u", "", "show user timeline")
+//	favorite := flag.String("f", "", "specify favorite ID")
+//	search := flag.String("s", "", "search word")
+//	inreply := flag.String("i", "", "specify in-reply ID, if not specify text, it will be RT.")
 	verbose := flag.Bool("v", false, "detail display")
 	flag.Usage = func() {
 		fmt.Fprint(os.Stderr, `Usage of twty:
@@ -83,19 +81,19 @@ func main() {
 	clientSecret := config["ClientSecret"]
 	accessToken, foundAccessToken := config["AccessToken"]
 	accessSecret, foundAccessSecret := config["AccessSecret"]
-	var token *oauth.Credentials
+
+	var twitter *tweet.Twitter
 	if foundAccessToken && foundAccessSecret {
-		token = myoauth.NewAccessToken(clientToken, clientSecret, accessToken, accessSecret)
+		twitterTmp := tweet.NewTwitterFromAccessInfo(accessToken, accessSecret, clientToken, clientSecret)
+		twitter = twitterTmp
 	} else {
-		clientToken := config["ClientToken"]
-		clientSecret := config["ClientSecret"]
-		tokenTemp, authorized, err := myoauth.GetAccessToken(clientToken, clientSecret)
+		twitterTmp, authorized, err := tweet.NewTwitterFromClientInfo(clientToken, clientSecret)
 		if err != nil {
-			log.Fatal("faild to get access token:", err)
+			log.Fatal("faild to create twitter:", err)
 		}
 		if authorized {
-			config["AccessToken"] = tokenTemp.Token
-			config["AccessSecret"] = tokenTemp.Secret
+			config["AccessToken"] = twitterTmp.Token.Token
+			config["AccessSecret"] = twitterTmp.Token.Secret
 			b, err := json.MarshalIndent(config, "", "  ")
 			if err != nil {
 				log.Fatal("failed to store file:", err)
@@ -105,51 +103,52 @@ func main() {
 				log.Fatal("failed to store file:", err)
 			}
 		}
-		token = tokenTemp
+		twitter = twitterTmp
 	}
 
-	if len(*search) > 0 {
-		tweets, err := tweet.GetStatuses(token, "https://api.twitter.com/1.1/search/tweets.json", map[string]string{"q": *search})
-		if err != nil {
-			log.Fatal("failed to get tweets:", err)
-		}
-		showTweets(tweets, *verbose)
-	} else if *reply {
-		tweets, err := tweet.GetTweets(token, "https://api.twitter.com/1.1/statuses/mentions_timeline.json", map[string]string{})
-		if err != nil {
-			log.Fatal("failed to get tweets:", err)
-		}
-		showTweets(tweets, *verbose)
-	} else if len(*list) > 0 {
-		part := strings.SplitN(*list, "/", 2)
-		if len(part) == 2 {
-			tweets, err := tweet.GetTweets(token, "https://api.twitter.com/1.1/lists/statuses.json", map[string]string{"owner_screen_name": part[0], "slug": part[1]})
+
+//	if len(*search) > 0 {
+//		tweets, err := tweet.GetStatuses(token, "https://api.twitter.com/1.1/search/tweets.json", map[string]string{"q": *search})
+//		if err != nil {
+//			log.Fatal("failed to get tweets:", err)
+//		}
+//		showTweets(tweets, *verbose)
+//	} else if *reply {
+//		tweets, err := tweet.GetTweets(token, "https://api.twitter.com/1.1/statuses/mentions_timeline.json", map[string]string{})
+//		if err != nil {
+//			log.Fatal("failed to get tweets:", err)
+//		}
+//		showTweets(tweets, *verbose)
+//	} else if len(*list) > 0 {
+//		part := strings.SplitN(*list, "/", 2)
+//		if len(part) == 2 {
+//			tweets, err := tweet.GetTweets(token, "https://api.twitter.com/1.1/lists/statuses.json", map[string]string{"owner_screen_name": part[0], "slug": part[1]})
+//			if err != nil {
+//				log.Fatal("failed to get tweets:", err)
+//			}
+//			showTweets(tweets, *verbose)
+//		}
+//	} else if len(*user) > 0 {
+//		tweets, err := tweet.GetTweets(token, "https://api.twitter.com/1.1/statuses/user_timeline.json", map[string]string{"screen_name": *user})
+//		if err != nil {
+//			log.Fatal("failed to get tweets:", err)
+//		}
+//		showTweets(tweets, *verbose)
+//	} else if len(*favorite) > 0 {
+//		tweet.PostTweet(token, "https://api.twitter.com/1.1/favorites/create.json", map[string]string{"id": *favorite})
+//	} else if flag.NArg() == 0 {
+//		if len(*inreply) > 0 {
+//			tweet.PostTweet(token, "https://api.twitter.com/1.1/statuses/retweet/"+*inreply+".json", map[string]string{})
+//		} else {
+			tweets, err := twitter.GetHomeTimeline()
 			if err != nil {
 				log.Fatal("failed to get tweets:", err)
 			}
 			showTweets(tweets, *verbose)
-		}
-	} else if len(*user) > 0 {
-		tweets, err := tweet.GetTweets(token, "https://api.twitter.com/1.1/statuses/user_timeline.json", map[string]string{"screen_name": *user})
-		if err != nil {
-			log.Fatal("failed to get tweets:", err)
-		}
-		showTweets(tweets, *verbose)
-	} else if len(*favorite) > 0 {
-		tweet.PostTweet(token, "https://api.twitter.com/1.1/favorites/create.json", map[string]string{"id": *favorite})
-	} else if flag.NArg() == 0 {
-		if len(*inreply) > 0 {
-			tweet.PostTweet(token, "https://api.twitter.com/1.1/statuses/retweet/"+*inreply+".json", map[string]string{})
-		} else {
-			tweets, err := tweet.GetTweets(token, "https://api.twitter.com/1.1/statuses/home_timeline.json", map[string]string{})
-			if err != nil {
-				log.Fatal("failed to get tweets:", err)
-			}
-			showTweets(tweets, *verbose)
-		}
-	} else {
-		tweet.PostTweet(token, "https://api.twitter.com/1.1/statuses/update.json", map[string]string{"status": strings.Join(flag.Args(), " "), "in_reply_to_status_id": *inreply})
-	}
+//		}
+//	} else {
+//		tweet.PostTweet(token, "https://api.twitter.com/1.1/statuses/update.json", map[string]string{"status": strings.Join(flag.Args(), " "), "in_reply_to_status_id": *inreply})
+//	}
 }
 
 func showTweets(tweets []tweet.Tweet, verbose bool) {

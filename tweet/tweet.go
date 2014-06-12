@@ -9,6 +9,46 @@ import (
 	"net/url"
 )
 
+type Twitter struct {
+	Token *oauth.Credentials
+}
+
+func NewTwitterFromClientInfo(clientToken string, clientSecret string) (*Twitter, bool, error) {
+
+	token, authorized, err := myoauth.GetAccessToken(clientToken, clientSecret)
+
+	var funcError error
+
+	if err != nil {
+		funcError = err
+	}
+
+	var twitter *Twitter
+	if funcError == nil && authorized {
+		twitter = new(Twitter)
+		twitter.Token = token
+	} else {
+		twitter = nil
+	}
+
+	return twitter, authorized, funcError
+}
+
+func (twitter *Twitter) GetHomeTimeline() ([]Tweet, error) {
+	tweets, err := getTweets(twitter.Token, "https://api.twitter.com/1.1/statuses/home_timeline.json", map[string]string{})
+
+	return tweets, err
+}
+
+func NewTwitterFromAccessInfo(accessToken string, accessSecret string, clientToken string, clientSecret string) (*Twitter) {
+
+	token := myoauth.NewAccessToken(clientToken, clientSecret, accessToken, accessSecret)
+
+	twitter := new(Twitter)
+	twitter.Token = token
+	return twitter
+}
+
 type Tweet struct {
 	Text       string
 	Identifier string `json:"id_str"`
@@ -56,7 +96,7 @@ type RSS struct {
 	}
 }
 
-func GetTweets(token *oauth.Credentials, url_ string, opt map[string]string) ([]Tweet, error) {
+func getTweets(token *oauth.Credentials, url_ string, opt map[string]string) ([]Tweet, error) {
 	param := make(url.Values)
 	for k, v := range opt {
 		param.Set(k, v)
