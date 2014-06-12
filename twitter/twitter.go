@@ -1,7 +1,7 @@
 package twitter
 
 import (
-	"../myoauth"
+	toauth "../twitter/oauth"
 	"encoding/json"
 	"github.com/garyburd/go-oauth/oauth"
 	"log"
@@ -15,7 +15,7 @@ type Twitter struct {
 
 func NewTwitterFromClientInfo(clientToken string, clientSecret string) (*Twitter, bool, error) {
 
-	token, authorized, err := myoauth.GetAccessToken(clientToken, clientSecret)
+	token, authorized, err := toauth.GetAccessToken(clientToken, clientSecret)
 
 	var funcError error
 
@@ -42,7 +42,7 @@ func (twitter *Twitter) GetHomeTimeline() ([]Tweet, error) {
 
 func NewTwitterFromAccessInfo(accessToken string, accessSecret string, clientToken string, clientSecret string) *Twitter {
 
-	token := myoauth.NewAccessToken(clientToken, clientSecret, accessToken, accessSecret)
+	token := toauth.NewAccessToken(clientToken, clientSecret, accessToken, accessSecret)
 
 	twitter := new(Twitter)
 	twitter.Token = token
@@ -101,7 +101,7 @@ func getTweets(token *oauth.Credentials, url_ string, opt map[string]string) ([]
 	for k, v := range opt {
 		param.Set(k, v)
 	}
-	myoauth.OauthClient.SignParam(token, "GET", url_, param)
+	toauth.OauthClient.SignParam(token, "GET", url_, param)
 	url_ = url_ + "?" + param.Encode()
 	res, err := http.Get(url_)
 	if err != nil {
@@ -124,7 +124,7 @@ func GetStatuses(token *oauth.Credentials, url_ string, opt map[string]string) (
 	for k, v := range opt {
 		param.Set(k, v)
 	}
-	myoauth.OauthClient.SignParam(token, "GET", url_, param)
+	toauth.OauthClient.SignParam(token, "GET", url_, param)
 	url_ = url_ + "?" + param.Encode()
 	res, err := http.Get(url_)
 	if err != nil {
@@ -149,7 +149,7 @@ func PostTweet(token *oauth.Credentials, url_ string, opt map[string]string) err
 	for k, v := range opt {
 		param.Set(k, v)
 	}
-	myoauth.OauthClient.SignParam(token, "POST", url_, param)
+	toauth.OauthClient.SignParam(token, "POST", url_, param)
 	res, err := http.PostForm(url_, url.Values(param))
 	if err != nil {
 		log.Println("failed to post tweet:", err)
