@@ -1,7 +1,7 @@
 package main
 
 import (
-	"./tweet"
+	"./twitter"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -82,18 +82,18 @@ func main() {
 	accessToken, foundAccessToken := config["AccessToken"]
 	accessSecret, foundAccessSecret := config["AccessSecret"]
 
-	var twitter *tweet.Twitter
+	var twClient *twitter.Twitter
 	if foundAccessToken && foundAccessSecret {
-		twitterTmp := tweet.NewTwitterFromAccessInfo(accessToken, accessSecret, clientToken, clientSecret)
-		twitter = twitterTmp
+		twClientTmp := twitter.NewTwitterFromAccessInfo(accessToken, accessSecret, clientToken, clientSecret)
+		twClient = twClientTmp
 	} else {
-		twitterTmp, authorized, err := tweet.NewTwitterFromClientInfo(clientToken, clientSecret)
+		twClientTmp, authorized, err := twitter.NewTwitterFromClientInfo(clientToken, clientSecret)
 		if err != nil {
 			log.Fatal("faild to create twitter:", err)
 		}
 		if authorized {
-			config["AccessToken"] = twitterTmp.Token.Token
-			config["AccessSecret"] = twitterTmp.Token.Secret
+			config["AccessToken"] = twClientTmp.Token.Token
+			config["AccessSecret"] = twClientTmp.Token.Secret
 			b, err := json.MarshalIndent(config, "", "  ")
 			if err != nil {
 				log.Fatal("failed to store file:", err)
@@ -103,17 +103,17 @@ func main() {
 				log.Fatal("failed to store file:", err)
 			}
 		}
-		twitter = twitterTmp
+		twClient = twClientTmp
 	}
 
 	//	if len(*search) > 0 {
-	//		tweets, err := tweet.GetStatuses(token, "https://api.twitter.com/1.1/search/tweets.json", map[string]string{"q": *search})
+	//		tweets, err := twClient.GetStatuses(token, "https://api.twitter.com/1.1/search/tweets.json", map[string]string{"q": *search})
 	//		if err != nil {
 	//			log.Fatal("failed to get tweets:", err)
 	//		}
 	//		showTweets(tweets, *verbose)
 	//	} else if *reply {
-	//		tweets, err := tweet.GetTweets(token, "https://api.twitter.com/1.1/statuses/mentions_timeline.json", map[string]string{})
+	//		tweets, err := twClient.GetTweets(token, "https://api.twitter.com/1.1/statuses/mentions_timeline.json", map[string]string{})
 	//		if err != nil {
 	//			log.Fatal("failed to get tweets:", err)
 	//		}
@@ -121,36 +121,36 @@ func main() {
 	//	} else if len(*list) > 0 {
 	//		part := strings.SplitN(*list, "/", 2)
 	//		if len(part) == 2 {
-	//			tweets, err := tweet.GetTweets(token, "https://api.twitter.com/1.1/lists/statuses.json", map[string]string{"owner_screen_name": part[0], "slug": part[1]})
+	//			tweets, err := twClient.GetTweets(token, "https://api.twitter.com/1.1/lists/statuses.json", map[string]string{"owner_screen_name": part[0], "slug": part[1]})
 	//			if err != nil {
 	//				log.Fatal("failed to get tweets:", err)
 	//			}
 	//			showTweets(tweets, *verbose)
 	//		}
 	//	} else if len(*user) > 0 {
-	//		tweets, err := tweet.GetTweets(token, "https://api.twitter.com/1.1/statuses/user_timeline.json", map[string]string{"screen_name": *user})
+	//		tweets, err := twClient.GetTweets(token, "https://api.twitter.com/1.1/statuses/user_timeline.json", map[string]string{"screen_name": *user})
 	//		if err != nil {
 	//			log.Fatal("failed to get tweets:", err)
 	//		}
 	//		showTweets(tweets, *verbose)
 	//	} else if len(*favorite) > 0 {
-	//		tweet.PostTweet(token, "https://api.twitter.com/1.1/favorites/create.json", map[string]string{"id": *favorite})
+	//		twClient.PostTweet(token, "https://api.twitter.com/1.1/favorites/create.json", map[string]string{"id": *favorite})
 	//	} else if flag.NArg() == 0 {
 	//		if len(*inreply) > 0 {
-	//			tweet.PostTweet(token, "https://api.twitter.com/1.1/statuses/retweet/"+*inreply+".json", map[string]string{})
+	//			twClient.PostTweet(token, "https://api.twitter.com/1.1/statuses/retweet/"+*inreply+".json", map[string]string{})
 	//		} else {
-	tweets, err := twitter.GetHomeTimeline()
+	tweets, err := twClient.GetHomeTimeline()
 	if err != nil {
 		log.Fatal("failed to get tweets:", err)
 	}
 	showTweets(tweets, *verbose)
 	//		}
 	//	} else {
-	//		tweet.PostTweet(token, "https://api.twitter.com/1.1/statuses/update.json", map[string]string{"status": strings.Join(flag.Args(), " "), "in_reply_to_status_id": *inreply})
+	//		twClient.PostTweet(token, "https://api.twitter.com/1.1/statuses/update.json", map[string]string{"status": strings.Join(flag.Args(), " "), "in_reply_to_status_id": *inreply})
 	//	}
 }
 
-func showTweets(tweets []tweet.Tweet, verbose bool) {
+func showTweets(tweets []twitter.Tweet, verbose bool) {
 	if verbose {
 		for i := len(tweets) - 1; i >= 0; i-- {
 			name := tweets[i].User.Name
