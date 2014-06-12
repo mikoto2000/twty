@@ -56,12 +56,12 @@ func getConfig() (string, map[string]string) {
 }
 
 func main() {
-//	reply := flag.Bool("r", false, "show replies")
-//	list := flag.String("l", "", "show tweets")
-//	user := flag.String("u", "", "show user timeline")
-//	favorite := flag.String("f", "", "specify favorite ID")
-//	search := flag.String("s", "", "search word")
-//	inreply := flag.String("i", "", "specify in-reply ID, if not specify text, it will be RT.")
+	//	reply := flag.Bool("r", false, "show replies")
+	//	list := flag.String("l", "", "show tweets")
+	//	user := flag.String("u", "", "show user timeline")
+	//	favorite := flag.String("f", "", "specify favorite ID")
+	//	search := flag.String("s", "", "search word")
+	//	inreply := flag.String("i", "", "specify in-reply ID, if not specify text, it will be RT.")
 	verbose := flag.Bool("v", false, "detail display")
 	flag.Usage = func() {
 		fmt.Fprint(os.Stderr, `Usage of twty:
@@ -106,49 +106,48 @@ func main() {
 		twitter = twitterTmp
 	}
 
-
-//	if len(*search) > 0 {
-//		tweets, err := tweet.GetStatuses(token, "https://api.twitter.com/1.1/search/tweets.json", map[string]string{"q": *search})
-//		if err != nil {
-//			log.Fatal("failed to get tweets:", err)
-//		}
-//		showTweets(tweets, *verbose)
-//	} else if *reply {
-//		tweets, err := tweet.GetTweets(token, "https://api.twitter.com/1.1/statuses/mentions_timeline.json", map[string]string{})
-//		if err != nil {
-//			log.Fatal("failed to get tweets:", err)
-//		}
-//		showTweets(tweets, *verbose)
-//	} else if len(*list) > 0 {
-//		part := strings.SplitN(*list, "/", 2)
-//		if len(part) == 2 {
-//			tweets, err := tweet.GetTweets(token, "https://api.twitter.com/1.1/lists/statuses.json", map[string]string{"owner_screen_name": part[0], "slug": part[1]})
-//			if err != nil {
-//				log.Fatal("failed to get tweets:", err)
-//			}
-//			showTweets(tweets, *verbose)
-//		}
-//	} else if len(*user) > 0 {
-//		tweets, err := tweet.GetTweets(token, "https://api.twitter.com/1.1/statuses/user_timeline.json", map[string]string{"screen_name": *user})
-//		if err != nil {
-//			log.Fatal("failed to get tweets:", err)
-//		}
-//		showTweets(tweets, *verbose)
-//	} else if len(*favorite) > 0 {
-//		tweet.PostTweet(token, "https://api.twitter.com/1.1/favorites/create.json", map[string]string{"id": *favorite})
-//	} else if flag.NArg() == 0 {
-//		if len(*inreply) > 0 {
-//			tweet.PostTweet(token, "https://api.twitter.com/1.1/statuses/retweet/"+*inreply+".json", map[string]string{})
-//		} else {
-			tweets, err := twitter.GetHomeTimeline()
-			if err != nil {
-				log.Fatal("failed to get tweets:", err)
-			}
-			showTweets(tweets, *verbose)
-//		}
-//	} else {
-//		tweet.PostTweet(token, "https://api.twitter.com/1.1/statuses/update.json", map[string]string{"status": strings.Join(flag.Args(), " "), "in_reply_to_status_id": *inreply})
-//	}
+	//	if len(*search) > 0 {
+	//		tweets, err := tweet.GetStatuses(token, "https://api.twitter.com/1.1/search/tweets.json", map[string]string{"q": *search})
+	//		if err != nil {
+	//			log.Fatal("failed to get tweets:", err)
+	//		}
+	//		showTweets(tweets, *verbose)
+	//	} else if *reply {
+	//		tweets, err := tweet.GetTweets(token, "https://api.twitter.com/1.1/statuses/mentions_timeline.json", map[string]string{})
+	//		if err != nil {
+	//			log.Fatal("failed to get tweets:", err)
+	//		}
+	//		showTweets(tweets, *verbose)
+	//	} else if len(*list) > 0 {
+	//		part := strings.SplitN(*list, "/", 2)
+	//		if len(part) == 2 {
+	//			tweets, err := tweet.GetTweets(token, "https://api.twitter.com/1.1/lists/statuses.json", map[string]string{"owner_screen_name": part[0], "slug": part[1]})
+	//			if err != nil {
+	//				log.Fatal("failed to get tweets:", err)
+	//			}
+	//			showTweets(tweets, *verbose)
+	//		}
+	//	} else if len(*user) > 0 {
+	//		tweets, err := tweet.GetTweets(token, "https://api.twitter.com/1.1/statuses/user_timeline.json", map[string]string{"screen_name": *user})
+	//		if err != nil {
+	//			log.Fatal("failed to get tweets:", err)
+	//		}
+	//		showTweets(tweets, *verbose)
+	//	} else if len(*favorite) > 0 {
+	//		tweet.PostTweet(token, "https://api.twitter.com/1.1/favorites/create.json", map[string]string{"id": *favorite})
+	//	} else if flag.NArg() == 0 {
+	//		if len(*inreply) > 0 {
+	//			tweet.PostTweet(token, "https://api.twitter.com/1.1/statuses/retweet/"+*inreply+".json", map[string]string{})
+	//		} else {
+	tweets, err := twitter.GetHomeTimeline()
+	if err != nil {
+		log.Fatal("failed to get tweets:", err)
+	}
+	showTweets(tweets, *verbose)
+	//		}
+	//	} else {
+	//		tweet.PostTweet(token, "https://api.twitter.com/1.1/statuses/update.json", map[string]string{"status": strings.Join(flag.Args(), " "), "in_reply_to_status_id": *inreply})
+	//	}
 }
 
 func showTweets(tweets []tweet.Tweet, verbose bool) {
@@ -174,4 +173,3 @@ func showTweets(tweets []tweet.Tweet, verbose bool) {
 		}
 	}
 }
-

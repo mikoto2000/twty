@@ -2,8 +2,8 @@ package tweet
 
 import (
 	"../myoauth"
-	"github.com/garyburd/go-oauth/oauth"
 	"encoding/json"
+	"github.com/garyburd/go-oauth/oauth"
 	"log"
 	"net/http"
 	"net/url"
@@ -40,7 +40,7 @@ func (twitter *Twitter) GetHomeTimeline() ([]Tweet, error) {
 	return tweets, err
 }
 
-func NewTwitterFromAccessInfo(accessToken string, accessSecret string, clientToken string, clientSecret string) (*Twitter) {
+func NewTwitterFromAccessInfo(accessToken string, accessSecret string, clientToken string, clientSecret string) *Twitter {
 
 	token := myoauth.NewAccessToken(clientToken, clientSecret, accessToken, accessSecret)
 
@@ -162,4 +162,3 @@ func PostTweet(token *oauth.Credentials, url_ string, opt map[string]string) err
 	}
 	return nil
 }
-

@@ -2,11 +2,11 @@ package myoauth
 
 import (
 	"bufio"
+	"fmt"
 	"github.com/garyburd/go-oauth/oauth"
 	"log"
 	"net/http"
 	"os"
-    "fmt"
 )
 
 var OauthClient = oauth.Client{
@@ -39,7 +39,7 @@ func clientAuth(requestToken *oauth.Credentials) (*oauth.Credentials, error) {
 	return accessToken, nil
 }
 
-func NewAccessToken(clientToken string, clientSecret string, accessToken string, accessSecret string)  (*oauth.Credentials) {
+func NewAccessToken(clientToken string, clientSecret string, accessToken string, accessSecret string) *oauth.Credentials {
 	OauthClient.Credentials.Token = clientToken
 	OauthClient.Credentials.Secret = clientSecret
 
@@ -67,4 +67,3 @@ func GetAccessToken(clientToken string, clientSecret string) (*oauth.Credentials
 
 	return token, authorized, nil
 }
-
