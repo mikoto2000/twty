@@ -1,7 +1,7 @@
 package twitter
 
 import (
-	toauth "../twitter/oauth"
+	toauth "./oauth"
 	"encoding/json"
 	"github.com/garyburd/go-oauth/oauth"
 	"log"

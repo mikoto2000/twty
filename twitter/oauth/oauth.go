@@ -1,4 +1,4 @@
-package twitteroauth
+package oauth
 
 import (
 	"bufio"
